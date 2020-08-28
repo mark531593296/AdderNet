@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.autograd import Function
-import math
+import math 
 
 def adder2d_function(X, W, stride=1, padding=0):
     n_filters, d_filter, h_filter, w_filter = W.size()
@@ -22,7 +22,7 @@ def adder2d_function(X, W, stride=1, padding=0):
 
     h_out, w_out = int(h_out), int(w_out)
     X_col = torch.nn.functional.unfold(X.view(1, -1, h_x, w_x), h_filter, dilation=1, padding=padding, stride=stride).view(n_x, -1, h_out*w_out)
-    X_col = X_col.permute(1,2,0).contiguous().view(X_col.size(1),-1)
+    X_col = X_col.permute(1,2,0).contiguous().view(X_col.size(1),-1)    #why not use reshape
     W_col = W.view(n_filters, -1)
     
     out = adder.apply(W_col,X_col)
@@ -45,7 +45,6 @@ class adder(Function):
         grad_W_col = ((X_col.unsqueeze(0)-W_col.unsqueeze(2))*grad_output.unsqueeze(1)).sum(2)
         grad_W_col = grad_W_col/grad_W_col.norm(p=2).clamp(min=1e-12)*math.sqrt(W_col.size(1)*W_col.size(0))/5
         grad_X_col = (-(X_col.unsqueeze(0)-W_col.unsqueeze(2)).clamp(-1,1)*grad_output.unsqueeze(1)).sum(0)
-        
         return grad_W_col, grad_X_col
     
 class adder2d(nn.Module):
